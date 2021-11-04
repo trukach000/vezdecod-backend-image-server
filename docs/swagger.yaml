@@ -26,6 +26,10 @@ paths:
         name: id
         required: true
         type: string
+      - description: scale coeff
+        in: query
+        name: scale
+        type: number
       produces:
       - image/jpeg
       responses:

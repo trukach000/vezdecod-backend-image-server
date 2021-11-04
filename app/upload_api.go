@@ -3,7 +3,12 @@ package app
 import (
 	"backend-image-server/app/repositories/images"
 	"backend-image-server/pkg/httpext"
+	"backend-image-server/pkg/resize"
+	"backend-image-server/pkg/utils"
+	"bufio"
+	"bytes"
 	"fmt"
+	"image/jpeg"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -91,6 +96,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 // @Summary get image by its id
 // @Description return image by its id
 // @Param id path string true "image id"
+// @Param scale query number false "scale coeff"
 // @Produce jpeg
 // @Success 200 {string} image/png
 // @Failure 404 {object} httpext.ErrorResponse
@@ -100,6 +106,16 @@ func GetImage(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	imageToken := chi.URLParam(r, "id")
+	scaleStr := r.URL.Query().Get("scale")
+
+	scale := 1.0
+	if scaleStr != "" {
+		var err error
+		scale, err = strconv.ParseFloat(scaleStr, 64)
+		if err != nil {
+			logrus.Errorf("Can't parse scale parameter: %s", scaleStr)
+		}
+	}
 
 	imageData, err := images.GetImageByToken(ctx, imageToken)
 	if err == images.ErrImageNotFound {
@@ -114,6 +130,26 @@ func GetImage(w http.ResponseWriter, r *http.Request) {
 			Message: "Can't get image from database",
 		}, http.StatusInternalServerError)
 		return
+	}
+
+	if !utils.AlmostEqual(scale, 1.0) {
+		logrus.Infof("Resizing image with scale: %f", scale)
+		img, err := jpeg.Decode(bytes.NewReader(imageData))
+		if err != nil {
+			logrus.Errorf("Can't decode image to jpeg: %s", err)
+			httpext.AbortJSON(w, httpext.ErrorResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "Can't decode image to jpeg",
+			}, http.StatusInternalServerError)
+			return
+		}
+
+		m := resize.Resize(img, scale)
+		var buf bytes.Buffer
+		writer := bufio.NewWriter(&buf)
+		jpeg.Encode(writer, m, nil)
+
+		imageData = buf.Bytes()
 	}
 
 	w.WriteHeader(http.StatusOK)

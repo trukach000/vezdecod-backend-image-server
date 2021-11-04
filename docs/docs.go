@@ -37,6 +37,12 @@ var doc = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "scale coeff",
+                        "name": "scale",
+                        "in": "query"
                     }
                 ],
                 "responses": {
