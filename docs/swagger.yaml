@@ -1,0 +1,75 @@
+definitions:
+  app.UploadResponse:
+    properties:
+      imageToken:
+        type: string
+    type: object
+  httpext.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API for images
+  title: Imloader Server API
+  version: "0.1"
+paths:
+  /get/{id}:
+    get:
+      description: return image by its id
+      parameters:
+      - description: image id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - image/jpeg
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpext.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpext.ErrorResponse'
+      summary: get image by its id
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: upload jpg image into MySQL database (max allowed size - 50 mb)
+      parameters:
+      - description: image to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpext.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpext.ErrorResponse'
+      summary: Upload jpg image
+schemes:
+- http
+- https
+swagger: "2.0"
