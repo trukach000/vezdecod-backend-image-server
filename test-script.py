@@ -17,7 +17,7 @@ files = {
 }
 
 base_url = host + ':' + port
-if prefix is not None:
+if prefix is not None and prefix != '':
     base_url = base_url + '/' + prefix
 
 url = base_url + '/upload'    
