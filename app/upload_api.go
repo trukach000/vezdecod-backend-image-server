@@ -3,6 +3,7 @@ package app
 import (
 	"backend-image-server/app/repositories/images"
 	"backend-image-server/pkg/httpext"
+	"backend-image-server/pkg/phash"
 	"backend-image-server/pkg/resize"
 	"backend-image-server/pkg/utils"
 	"bufio"
@@ -10,6 +11,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -19,6 +21,7 @@ import (
 
 type UploadResponse struct {
 	ImageToken string `json:"imageToken"`
+	PHash      string `json:"pHash"`
 }
 
 // Upload godoc
@@ -87,8 +90,22 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	img, err := jpeg.Decode(bytes.NewReader(fileBytesBuffer))
+	if err != nil {
+		logrus.Errorf("Can't decode image to jpeg: %s", err)
+		httpext.AbortJSON(w, httpext.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "Can't decode image to jpeg",
+		}, http.StatusInternalServerError)
+		return
+	}
+	hashP := phash.PHash(img)
+
+	// find similar images by p-hash
+
 	httpext.JSON(w, UploadResponse{
 		ImageToken: token,
+		PHash:      fmt.Sprintf("%x", hashP),
 	})
 }
 
@@ -144,7 +161,10 @@ func GetImage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		m := resize.Resize(img, scale)
+		newHeight := int(math.Ceil(float64(img.Bounds().Dy()) * scale))
+		newWidth := int(math.Ceil(float64(img.Bounds().Dx()) * scale))
+
+		m := resize.Resize(img, newHeight, newWidth)
 		var buf bytes.Buffer
 		writer := bufio.NewWriter(&buf)
 		jpeg.Encode(writer, m, nil)

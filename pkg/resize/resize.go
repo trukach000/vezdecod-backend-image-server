@@ -1,27 +1,13 @@
 package resize
 
 import (
-	"backend-image-server/pkg/utils"
 	"image"
 	"image/draw"
-	"math"
 
 	"github.com/sirupsen/logrus"
 )
 
-func Resize(img image.Image, scale float64) image.Image {
-
-	newHeight := int(math.Ceil(float64(img.Bounds().Dy()) * scale))
-	newWidth := int(math.Ceil(float64(img.Bounds().Dx()) * scale))
-
-	if utils.AlmostEqual(scale, 1.0) {
-		return img
-	}
-
-	if img.Bounds().Dx() <= 0 || img.Bounds().Dy() <= 0 {
-		return img
-	}
-
+func Resize(img image.Image, newHeight int, newWidth int) *image.RGBA {
 	logrus.Infof("Old height: %d", img.Bounds().Dy())
 	logrus.Infof("Old width: %d", img.Bounds().Dx())
 
@@ -36,6 +22,10 @@ func Resize(img image.Image, scale float64) image.Image {
 		newImg := image.NewRGBA(img.Bounds())
 		draw.Draw(newImg, img.Bounds(), img, img.Bounds().Min, draw.Src)
 		rgbaImg = newImg
+	}
+
+	if img.Bounds().Dx() <= 0 || img.Bounds().Dy() <= 0 {
+		return rgbaImg
 	}
 
 	var dst *image.RGBA
