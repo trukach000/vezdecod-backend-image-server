@@ -23,7 +23,7 @@ func main() {
 	r := app.Setup()
 	cfg := config.Get()
 
-	docs.SwaggerInfo.BasePath = fmt.Sprintf("/%s/", cfg.GlobalPrefix)
+	docs.SwaggerInfo.BasePath = fmt.Sprintf("%s/", cfg.GlobalPrefix)
 
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 

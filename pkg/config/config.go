@@ -22,7 +22,7 @@ type Config struct {
 	TarantoolUser string `env:"TARANTOOL_USER" envDefault:"admin"`
 	TarantoolPass string `env:"TARANTOOL_PASS" envDefault:"pass"`
 
-	GlobalPrefix string `env:"GLOBAL_PREFIX" envDefault:"imloader"`
+	GlobalPrefix string `env:"GLOBAL_PREFIX" envDefault:""`
 
 	SecretAuthKey string `env:"SECRET_KEY" envDefault:"123"`
 }

@@ -5,7 +5,6 @@ import (
 	"backend-image-server/pkg/database"
 	"backend-image-server/pkg/httpext"
 	"backend-image-server/pkg/swagger"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -58,10 +57,8 @@ func Setup() *chi.Mux {
 	httpext.ServeDir(r, "/site/*", http.Dir("./site"))
 
 	// API
-	r.Route(fmt.Sprintf("/%s", cfg.GlobalPrefix), func(r chi.Router) {
-		r.Post("/upload", UploadImage)
-		r.Get("/get/{id}", GetImage)
-	})
+	r.Post("/upload", UploadImage)
+	r.Get("/get/{id}", GetImage)
 
 	return r
 }
