@@ -16,7 +16,6 @@ WORKDIR /go/src
 
 RUN go build -o api.server main.go
 
-ENV DB_HOST="host.docker.internal"
 ENV HOST="0.0.0.0"
 
 ENTRYPOINT ["./api.server"]
