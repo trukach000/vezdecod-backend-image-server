@@ -1,7 +1,20 @@
 definitions:
+  app.CompareResponse:
+    properties:
+      hammingDestance:
+        type: integer
+      isSimilar:
+        type: boolean
+      pHash1:
+        type: string
+      pHash2:
+        type: string
+    type: object
   app.UploadResponse:
     properties:
       imageToken:
+        type: string
+      pHash:
         type: string
     type: object
   httpext.ErrorResponse:
@@ -17,6 +30,34 @@ info:
   title: Imloader Server API
   version: "0.1"
 paths:
+  /compare:
+    post:
+      consumes:
+      - multipart/form-data
+      description: compare two jpg image (max allowed size - 50 mb)
+      parameters:
+      - description: image1 to compare
+        in: formData
+        name: image1
+        required: true
+        type: file
+      - description: image2 to compare
+        in: formData
+        name: image2
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.CompareResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpext.ErrorResponse'
+      summary: compare two jpg image
   /get/{id}:
     get:
       description: return image by its id

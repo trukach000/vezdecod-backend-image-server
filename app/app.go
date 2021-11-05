@@ -71,9 +71,12 @@ func Setup() *chi.Mux {
 	httpext.ServeFile(r, "/site", "./site/index.html")
 	httpext.ServeDir(r, "/site/*", http.Dir("./site"))
 
-	// API
+	// Upload and get API
 	r.Post("/upload", UploadImage)
 	r.Get("/get/{id}", GetImage)
+
+	//Compare API
+	r.Post("/compare", CompareImage)
 
 	return r
 }

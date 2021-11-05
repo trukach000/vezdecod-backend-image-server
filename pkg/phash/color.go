@@ -35,3 +35,22 @@ func ToGrayscalePixels(img *image.RGBA) [][]float64 {
 
 	return pixels
 }
+
+func ToNativeGrayscalePixels(img *image.RGBA) [][]float64 {
+
+	b := img.Bounds()
+	w, h := b.Max.X-b.Min.X, b.Max.Y-b.Min.Y
+	pixels := make([][]float64, h)
+
+	for i := range pixels {
+		pixels[i] = make([]float64, w)
+		for j := range pixels[i] {
+			color := img.At(j, i)
+			r, g, b, _ := color.RGBA()
+			s := 0.33*float64(r/256) + 0.33*float64(g/256) + 0.33*float64(b/256)
+			pixels[i][j] = s
+		}
+	}
+
+	return pixels
+}

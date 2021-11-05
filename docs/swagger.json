@@ -11,6 +11,48 @@
         "version": "0.1"
     },
     "paths": {
+        "/compare": {
+            "post": {
+                "description": "compare two jpg image (max allowed size - 50 mb)",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "compare two jpg image",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "image1 to compare",
+                        "name": "image1",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "image2 to compare",
+                        "name": "image2",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.CompareResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/httpext.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/get/{id}": {
             "get": {
                 "description": "return image by its id",
@@ -98,10 +140,30 @@
         }
     },
     "definitions": {
+        "app.CompareResponse": {
+            "type": "object",
+            "properties": {
+                "hammingDestance": {
+                    "type": "integer"
+                },
+                "isSimilar": {
+                    "type": "boolean"
+                },
+                "pHash1": {
+                    "type": "string"
+                },
+                "pHash2": {
+                    "type": "string"
+                }
+            }
+        },
         "app.UploadResponse": {
             "type": "object",
             "properties": {
                 "imageToken": {
+                    "type": "string"
+                },
+                "pHash": {
                     "type": "string"
                 }
             }

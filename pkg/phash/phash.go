@@ -28,7 +28,8 @@ func PHash(img image.Image) []byte {
 	flattenDct := Flatten(dctReducesPixes, 8, 8)
 
 	sum := 0.0
-	for i := 0; i < 64; i++ {
+	// remove first value (coz it can be significant big than the other values)
+	for i := 1; i < 64; i++ {
 		sum += (flattenDct[i])
 	}
 	dctAvg := (float64(sum)) / (float64(32 * 32))
