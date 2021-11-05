@@ -17,3 +17,10 @@ GET /get/{id}?scale=x - возвращает картинку по ID (и мас
 
 
 python3 ./test-script.py http://127.0.0.1 30001 ""
+
+
+Проект хостится по адресу
+
+https://trukach000.ru/imloader
+
+сваггер - https://trukach000.ru/imloader/swagger/index.html
