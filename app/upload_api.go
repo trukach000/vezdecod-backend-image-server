@@ -135,7 +135,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 
 		logrus.Infof("There is an image with the same pHash: %+v", data)
 
-		if utils.AlmostEqual(newAspectRatio, data.AspectRatio) {
+		if utils.EqualWithPrecision(newAspectRatio, data.AspectRatio, 0.01) {
 			logrus.Infof("Ratios are equals, check the sizes")
 			logrus.Infof("Old width %d, new width: %d", data.W, newWidth)
 			if newWidth > int(data.W) {
