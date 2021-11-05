@@ -28,7 +28,7 @@ func ToGrayscalePixels(img *image.RGBA) [][]float64 {
 		for j := range pixels[i] {
 			color := img.At(j, i)
 			r, g, b, _ := color.RGBA()
-			s := 0.299*float64(r/257) + 0.587*float64(g/257) + 0.114*float64(b/256)
+			s := 0.299*float64(r/256) + 0.587*float64(g/256) + 0.114*float64(b/256)
 			pixels[i][j] = s
 		}
 	}

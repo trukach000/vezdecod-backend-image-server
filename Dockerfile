@@ -1,6 +1,6 @@
 
 FROM golang:1.15-alpine
-LABEL maintainer="vezdecod"
+LABEL maintainer="trukach000"
 
 RUN apk --no-cache add tzdata
 
