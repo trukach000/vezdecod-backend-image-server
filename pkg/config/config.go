@@ -17,6 +17,11 @@ type Config struct {
 	DBPass string `env:"DB_PASS" envDefault:"password"`
 	DBName string `env:"DB_NAME" envDefault:"imloader"`
 
+	RedisHost         string `env:"REDIS_HOST" envDefault:"localhost"`
+	RedisPort         string `env:"REDIS_PORT" envDefault:"6379"`
+	RedisPass         string `env:"REDIS_PASS" envDefault:""`
+	RedisDatabaseName string `env:"REDIS_DB_NAME" envDefault:"1"`
+
 	TarantoolHost string `env:"TARANTOOL_HOST" envDefault:"localhost"`
 	TarantoolPort string `env:"TARANTOOL_PORT" envDefault:"3301"`
 	TarantoolUser string `env:"TARANTOOL_USER" envDefault:"admin"`

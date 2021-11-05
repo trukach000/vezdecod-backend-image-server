@@ -4,6 +4,7 @@ import (
 	"backend-image-server/pkg/config"
 	"backend-image-server/pkg/database"
 	"backend-image-server/pkg/httpext"
+	"backend-image-server/pkg/redisclient"
 	"backend-image-server/pkg/swagger"
 	"net/http"
 	"os"
@@ -35,11 +36,25 @@ func Setup() *chi.Mux {
 		os.Exit(1)
 	}
 
+	redisClient, err := redisclient.InitRedisClient(
+		cfg.RedisHost,
+		cfg.RedisPort,
+		cfg.RedisPass,
+		cfg.RedisDatabaseName,
+		"30s",
+	)
+
+	if err != nil {
+		logrus.Errorf("can't connect to redis: %s", err)
+		os.Exit(1)
+	}
+
 	r.Use(
 		chilogrus.Logger("logger", log),
 		chim.Recoverer,
 		chim.NoCache,
 		database.NewDatabaseMiddleware(db).Attach,
+		redisclient.NewRedisMiddleware(redisClient).Attach,
 	)
 
 	r.Use(cors.Handler(cors.Options{

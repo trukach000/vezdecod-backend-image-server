@@ -8,6 +8,8 @@ import (
 )
 
 func Resize(img image.Image, newHeight int, newWidth int) *image.RGBA {
+	logrus.Infof("Resizing...")
+
 	logrus.Infof("Old height: %d", img.Bounds().Dy())
 	logrus.Infof("Old width: %d", img.Bounds().Dx())
 

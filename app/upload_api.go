@@ -4,10 +4,12 @@ import (
 	"backend-image-server/app/repositories/images"
 	"backend-image-server/pkg/httpext"
 	"backend-image-server/pkg/phash"
+	"backend-image-server/pkg/redisclient"
 	"backend-image-server/pkg/resize"
 	"backend-image-server/pkg/utils"
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image/jpeg"
 	"io/ioutil"
@@ -16,6 +18,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 )
 
@@ -80,16 +83,6 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	logrus.Infof("File Size: %d", handler.Size)
 
-	token, err := images.SaveNewImage(ctx, fileBytesBuffer)
-	if err != nil {
-		logrus.Errorf("Can't save image into database: %s", err)
-		httpext.AbortJSON(w, httpext.ErrorResponse{
-			Code:    http.StatusInternalServerError,
-			Message: "Can't save image into database",
-		}, http.StatusInternalServerError)
-		return
-	}
-
 	img, err := jpeg.Decode(bytes.NewReader(fileBytesBuffer))
 	if err != nil {
 		logrus.Errorf("Can't decode image to jpeg: %s", err)
@@ -99,13 +92,100 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 		}, http.StatusInternalServerError)
 		return
 	}
+
+	newWidth := img.Bounds().Dx()
+	newHeight := img.Bounds().Dy()
+	newAspectRatio := float64(newHeight) / float64(newWidth)
+	logrus.Infof("newWidth: %d", newWidth)
+	logrus.Infof("newHeight: %d", newHeight)
+	logrus.Infof("newAspectRatio: %f", newAspectRatio)
+
 	hashP := phash.PHash(img)
+	hashPString := fmt.Sprintf("%x", hashP)
 
 	// find similar images by p-hash
 
+	redisClient, err := redisclient.GetRedisFromContext(ctx)
+	if err != nil {
+		logrus.Errorf("Can't get redis from context: %s", err)
+		httpext.AbortJSON(w, httpext.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "Internal server error",
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	token := ""
+
+	valueRaw, err := redisClient.Get(images.GetRedisKey(hashPString, newAspectRatio)).Result()
+	if err != redis.Nil {
+		// there is a similar image in redis
+		// check ration and in case of new img is larger change it, otherwise just return the old one
+
+		var data redisclient.ImgData
+		err := json.Unmarshal([]byte(valueRaw), &data)
+		if err != nil {
+			logrus.Errorf("Can't get data from redis (unmarshall error): %s", err)
+			httpext.AbortJSON(w, httpext.ErrorResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "Internal server error",
+			}, http.StatusInternalServerError)
+			return
+		}
+
+		logrus.Infof("There is an image with the same pHash: %+v", data)
+
+		if utils.AlmostEqual(newAspectRatio, data.AspectRatio) {
+			logrus.Infof("Ratios are equals, check the sizes")
+			logrus.Infof("Old width %d, new width: %d", data.W, newWidth)
+			if newWidth > int(data.W) {
+				logrus.Infof("The new one is larger, upload new one")
+
+				err := images.ReplaceImage(
+					ctx, data.Token, hashPString,
+					newWidth, newHeight, newAspectRatio,
+					fileBytesBuffer,
+				)
+				if err != nil {
+					logrus.Errorf("Can't replace image into database: %s", err)
+					httpext.AbortJSON(w, httpext.ErrorResponse{
+						Code:    http.StatusInternalServerError,
+						Message: "Can't replace image into database",
+					}, http.StatusInternalServerError)
+					return
+				}
+				token = data.Token
+			} else {
+				logrus.Infof("The old one is larger or equal, return the old token")
+				token = data.Token
+			}
+		} else {
+			logrus.Infof("New image has different aspect ratio: %f, save it", newAspectRatio)
+			token, err = images.SaveNewImage(ctx, hashPString, newWidth, newHeight, newAspectRatio, fileBytesBuffer)
+			if err != nil {
+				logrus.Errorf("Can't save image into database: %s", err)
+				httpext.AbortJSON(w, httpext.ErrorResponse{
+					Code:    http.StatusInternalServerError,
+					Message: "Can't save image into database",
+				}, http.StatusInternalServerError)
+				return
+			}
+		}
+	} else {
+		token, err = images.SaveNewImage(ctx, hashPString, newWidth, newHeight, newAspectRatio, fileBytesBuffer)
+		if err != nil {
+			logrus.Errorf("Can't save image into database: %s", err)
+			httpext.AbortJSON(w, httpext.ErrorResponse{
+				Code:    http.StatusInternalServerError,
+				Message: "Can't save image into database",
+			}, http.StatusInternalServerError)
+			return
+		}
+	}
+
 	httpext.JSON(w, UploadResponse{
 		ImageToken: token,
-		PHash:      fmt.Sprintf("%x", hashP),
+		PHash:      hashPString,
 	})
 }
 

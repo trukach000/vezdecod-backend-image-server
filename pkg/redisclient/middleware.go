@@ -1,4 +1,4 @@
-package redis
+package redisclient
 
 import (
 	"net/http"
@@ -6,16 +6,14 @@ import (
 	"github.com/go-redis/redis"
 )
 
-func NewRedisMiddleware(r *redis.Client, ignoreRedis bool) *RedisMiddleware {
+func NewRedisMiddleware(r *redis.Client) *RedisMiddleware {
 	return &RedisMiddleware{
 		client: r,
-		ignore: ignoreRedis,
 	}
 }
 
 type RedisMiddleware struct {
 	client *redis.Client
-	ignore bool
 }
 
 func (rm *RedisMiddleware) Attach(next http.Handler) http.Handler {
